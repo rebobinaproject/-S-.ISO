@@ -1,1 +1,1 @@
-# -S-.ISO
+# gerador-de-capas
