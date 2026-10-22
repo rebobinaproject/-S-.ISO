@@ -13,11 +13,19 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 "Instrument S
 h1{font:700 26px/1.1 "Barlow Condensed",sans-serif;margin:0}
 header{padding:18px 16px 4px;max-width:1200px;margin:auto}
 header p{margin:4px 0 0;color:var(--mut)}
-main{max-width:1200px;margin:auto;padding:12px 16px 40px;display:grid;gap:16px}
-@media(min-width:900px){main{grid-template-columns:380px 1fr;align-items:start}.stage{position:sticky;top:12px}}
-.stage{order:-1;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px}
-@media(min-width:900px){.stage{order:0}}
-canvas{width:100%;height:auto;display:block;border-radius:4px;background:#888}
+main{max-width:1600px;margin:auto;padding:12px 16px 40px;display:grid;gap:16px}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center}
+.ctrl{display:grid;gap:16px;align-items:start}
+@media(min-width:900px){.ctrl{grid-template-columns:repeat(2,1fr)}}
+.tb{position:relative;flex:0 0 auto}
+.ck{background:repeating-conic-gradient(#bbb 0 25%,#eee 0 50%) 0 0/12px 12px;border-radius:4px}
+.thumbs.sm img{height:50px;max-width:110px;object-fit:contain}
+.item{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);border-radius:6px;padding:6px}
+.item img{height:36px;max-width:80px;object-fit:contain}
+.item button{padding:4px 8px}.item input[type=range]{width:90px;padding:0}
+.item select{width:auto}.item label{display:flex;gap:4px;align-items:center;font-weight:400}.item input[type=checkbox]{width:auto}
+
+canvas{max-width:100%;max-height:78vh;width:auto;height:auto;display:block;margin:auto;border-radius:4px;background:#888}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:10px}
 label{display:grid;gap:3px;font-weight:600;font-size:13px}
 input,select,textarea,button{font:inherit;color:var(--ink)}
@@ -46,13 +54,13 @@ summary{cursor:pointer;font-weight:600}
 <main>
   <section class="stage">
     <canvas id="cv" aria-label="Pré-visualização da capa"></canvas>
-    <div class="row" style="margin-top:10px">
+    <div class="row" style="margin-top:10px;justify-content:center">
       <button id="exp">Baixar PNG</button>
     </div>
     <p class="msg" id="size"></p>
   </section>
 
-  <div style="display:grid;gap:16px">
+  <div class="ctrl">
     <section class="panel">
       <label>Formato
         <select id="fmt">
@@ -69,37 +77,67 @@ summary{cursor:pointer;font-weight:600}
       <p class="msg" id="st"></p>
       <details>
         <summary>Chave da API do TMDB</summary>
-        <p class="msg">A busca usa o TMDB. Crie uma chave grátis em themoviedb.org (Configurações › API) e cole aqui. Ela fica salva só neste navegador.</p>
+        <p class="msg">Crie uma chave grátis em themoviedb.org (Configurações › API) e cole aqui. Ela fica salva só neste navegador.</p>
         <input id="key" placeholder="Chave da API (v3)">
       </details>
     </section>
 
     <section class="panel">
-      <strong>Arte da capa</strong>
+      <strong>Arte da capa (frente)</strong>
       <div class="thumbs" id="posters"></div>
       <label>Ou envie sua própria imagem<input id="up" type="file" accept="image/*"></label>
     </section>
 
     <section class="panel">
+      <strong>Imagens do verso (1 a 5)</strong>
+      <label>Layout
+        <select id="lay"><option value="auto">Automático (1 grande + pequenas)</option><option value="linha">Linha</option><option value="pilha">Empilhadas</option><option value="grade">Grade</option><option value="principal">Só a principal</option></select>
+      </label>
+      <p class="msg">Clique nas cenas para escolher. Use ◀ ▶ para trocar a posição.</p>
+      <div class="thumbs" id="backs"></div>
+      <div class="list" id="shotList" style="max-height:none"></div>
+      <label>Ou envie suas imagens<input id="shotup" type="file" accept="image/*" multiple></label>
+    </section>
+
+    <section class="panel">
       <strong>Textos</strong>
-      <label>Título<input id="title"></label>
+      <label>Título (deixe vazio para ocultar)<input id="title"></label>
       <label>Slogan<input id="tag"></label>
       <label>Sinopse<textarea id="ov"></textarea></label>
       <div class="three">
-        <label>Ano<input id="year"></label>
         <label>Duração (min)<input id="run"></label>
-        <label>Classificação<input id="rate"></label>
+        <label>Vídeo<input id="vid" placeholder="Widescreen"></label>
+        <label>Áudio<input id="aud" placeholder="Dolby Digital 5.1"></label>
       </div>
-      <label>Direção<input id="dir"></label>
-      <label>Elenco<input id="cast"></label>
+      <div class="three">
+        <label>Legendas<input id="sub"></label>
+        <label>Extras<input id="ext"></label>
+        <label>Gênero<input id="genre"></label>
+      </div>
+      <label>Bloco de créditos<textarea id="cred"></textarea></label>
+      <div class="three">
+        <label>Fonte do título<select id="ftitle"></select></label>
+        <label>Fonte dos textos<select id="ftxt"></select></label>
+        <label>Fonte dos créditos<select id="fcred"></select></label>
+      </div>
+      <label>Usar sua própria fonte nos créditos (.ttf, .otf ou .woff)<input id="fontup" type="file" accept=".ttf,.otf,.woff,.woff2"></label>
+      <p class="msg">A Univers 39 Thin Ultra Condensed é paga e não pode ser incluída aqui. Se você tem o arquivo, envie acima e ela será usada nos créditos.</p>
+    </section>
+
+    <section class="panel">
+      <strong>Emblemas de mídia e selos</strong>
+      <p class="msg">Sem limite. Toque nas opções do filme (produtoras e logos) ou envie seus PNGs (DVD, Blu-ray, Dolby, etc.).</p>
+      <div class="thumbs sm" id="embOpts"></div>
+      <label>Enviar emblemas<input id="badgeup" type="file" accept="image/*" multiple></label>
+      <div class="list" id="badgeList" style="max-height:none"></div>
     </section>
 
     <section class="panel">
       <strong>Cores</strong>
       <div class="three">
-        <label>Fundo<input type="color" id="bg" value="#14161b"></label>
+        <label>Fundo<input type="color" id="bg" value="#b32d2e"></label>
         <label>Texto<input type="color" id="fg" value="#f2f2f2"></label>
-        <label>Destaque<input type="color" id="ac" value="#ff5c9a"></label>
+        <label>Destaque<input type="color" id="ac" value="#ffffff"></label>
       </div>
     </section>
   </div>
@@ -110,9 +148,28 @@ const $ = id => document.getElementById(id);
 const FORMATS = { dvd:{w:273,h:183,spine:14}, bd:{w:272,h:149,spine:12}, vhs:{w:233,h:188,spine:25}, cd:{w:120,h:120,spine:0} };
 const PX = 300 / 25.4;
 const IMG = 'https://image.tmdb.org/t/p/';
-const S = { poster:null, studios:[], id:'' };
+const S = { poster:null, shots:[], badges:[], backs:[], opts:[], credFont:false, id:'' };
 const cv = $('cv'), ctx = cv.getContext('2d');
-const FONT = '"Barlow Condensed","Arial Narrow",sans-serif';
+let FONT = '"Barlow Condensed","Arial Narrow",sans-serif';
+const FL = [
+['Sistema','Futura (similar: Jost)','Jost','Jost:wght@400;700',700],['Sistema','Arial','Arial',null,700],['Sistema','Times New Roman','Times New Roman',null,700],['Sistema','Impact','Impact',null,400],['Sistema','Courier New','Courier New',null,700],
+['Gerais','Montserrat','Montserrat','Montserrat:wght@400;700',700],['Gerais','Poppins','Poppins','Poppins:wght@400;700',700],['Gerais','Play','Play','Play:wght@400;700',700],['Gerais','Roboto Flex','Roboto Flex','Roboto+Flex:wght@400;700',700],['Gerais','Nunito Sans','Nunito Sans','Nunito+Sans:wght@400;700',700],
+['Gerais','Rokkitt','Rokkitt','Rokkitt:wght@400;700',700],['Gerais','Playfair Display','Playfair Display','Playfair+Display:wght@400;700',700],['Gerais','Bodoni Moda','Bodoni Moda','Bodoni+Moda:wght@400;700',700],['Gerais','DM Serif Display','DM Serif Display','DM+Serif+Display',400],['Gerais','Cinzel','Cinzel','Cinzel:wght@400;700',700],
+['Gerais','Audiowide','Audiowide','Audiowide',400],['Gerais','Bungee','Bungee','Bungee',400],['Gerais','Londrina Solid','Londrina Solid','Londrina+Solid',400],['Gerais','Ultra','Ultra','Ultra',400],['Gerais','Rubik Mono One','Rubik Mono One','Rubik+Mono+One',400],
+['Condensadas','Teko','Teko','Teko:wght@400;700',700],['Condensadas','Barlow Condensed','Barlow Condensed','Barlow+Condensed:wght@400;700',700],['Condensadas','Bebas Neue','Bebas Neue','Bebas+Neue',400],['Condensadas','League Gothic','League Gothic','League+Gothic',400],['Condensadas','Sofia Sans Extra Condensed','Sofia Sans Extra Condensed','Sofia+Sans+Extra+Condensed:wght@400;700',700],['Condensadas','Stint Ultra Condensed','Stint Ultra Condensed','Stint+Ultra+Condensed',400],
+['Decorativas','Manufacturing Consent','Manufacturing Consent','Manufacturing+Consent',400],['Decorativas','Nosifer','Nosifer','Nosifer',400],['Decorativas','Metal Mania','Metal Mania','Metal+Mania',400],['Decorativas','Black Ops One','Black Ops One','Black+Ops+One',400],['Decorativas','VCR OSD Mono (similar: VT323)','VT323','VT323',400],['Decorativas','Chomsky (similar: UnifrakturCook)','UnifrakturCook','UnifrakturCook:wght@700',700],
+['Internacionais','Dela Gothic One','Dela Gothic One','Dela+Gothic+One',400],['Internacionais','Noto Sans','Noto Sans','Noto+Sans:wght@400;700',700],['Internacionais','Noto Serif','Noto Serif','Noto+Serif:wght@400;700',700],['Internacionais','IBM Plex Sans','IBM Plex Sans','IBM+Plex+Sans:wght@400;700',700],['Internacionais','Rubik','Rubik','Rubik:wght@400;700',700]
+].map(([g,n,f,q,w]) => ({ g, n, f, q, w }));
+const fontOf = id => { const v = $(id).value; return v === '__up' ? { f: 'CredFont', w: 400 } : FL.find(e => e.n === v) || FL.find(e => e.f === 'Barlow Condensed'); };
+const stk = e => `"${e.f}","Arial Narrow",sans-serif`;
+const loaded = {};
+function ensureFonts(){
+  const jobs = ['ftitle', 'ftxt', 'fcred'].map(fontOf).map(e => {
+    if (e.q && !loaded[e.f]) { loaded[e.f] = 1; const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = `https://fonts.googleapis.com/css2?family=${e.q}&display=swap`; document.head.appendChild(l); }
+    return document.fonts.load(`${e.w} 20px "${e.f}"`).catch(() => {});
+  });
+  return Promise.all(jobs).then(draw);
+}
 
 function loadImg(src){
   return new Promise((ok, no) => {
@@ -146,72 +203,116 @@ function cover(img, x, y, w, h){
   ctx.restore();
 }
 
+function rectsFor(n, mode, x, y, w, h){
+  const g = 1.5, r = [];
+  if (!n) return r;
+  if (mode === 'principal' || n === 1) return [[x, y, w, h]];
+  if (mode === 'linha') { const cw = (w - g * (n - 1)) / n; for (let i = 0; i < n; i++) r.push([x + i * (cw + g), y, cw, h]); return r; }
+  if (mode === 'pilha') { const ch = (h - g * (n - 1)) / n; for (let i = 0; i < n; i++) r.push([x, y + i * (ch + g), w, ch]); return r; }
+  if (mode === 'grade') { const rows = Math.ceil(n / 2), ch = (h - g * (rows - 1)) / rows, cw = (w - g) / 2; for (let i = 0; i < n; i++) r.push([x + (i % 2) * (cw + g), y + Math.floor(i / 2) * (ch + g), cw, ch]); return r; }
+  const bh = h * .64, k = n - 1, cw = (w - g * (k - 1)) / k;
+  r.push([x, y, w, bh]);
+  for (let i = 0; i < k; i++) r.push([x + i * (cw + g), y + bh + g, cw, h - bh - g]);
+  return r;
+}
+
+function drawBadge(b, x, y, w){
+  const h = w * b.img.height / b.img.width;
+  if (b.plate) { ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.fillRect(x - 1, y - 1, w + 2, h + 2); }
+  ctx.drawImage(b.img, x, y, w, h);
+  return h;
+}
+
+function infoRow(items, cx, y, size){
+  const parts = items.map(([l, v]) => {
+    ctx.font = `700 ${size}px ${FONT}`; const lw = ctx.measureText(l + ':').width;
+    ctx.font = `400 ${size}px ${FONT}`; const vw = ctx.measureText(' ' + v).width;
+    return { l, v, lw, vw };
+  });
+  let x = cx - (parts.reduce((a, p) => a + p.lw + p.vw, 0) + (parts.length - 1) * 5) / 2;
+  ctx.textAlign = 'left'; ctx.fillStyle = '#111';
+  for (const p of parts) {
+    ctx.font = `700 ${size}px ${FONT}`; ctx.fillText(p.l + ':', x, y); ctx.fillRect(x, y + .7, p.lw, .3);
+    ctx.font = `400 ${size}px ${FONT}`; ctx.fillText(' ' + p.v, x + p.lw, y);
+    x += p.lw + p.vw + 5;
+  }
+}
+
 function draw(){
   const f = FORMATS[$('fmt').value];
   cv.width = Math.round(f.w * PX); cv.height = Math.round(f.h * PX);
   $('size').textContent = `${cv.width} × ${cv.height} px`;
   ctx.setTransform(PX, 0, 0, PX, 0, 0);
-  const bg = $('bg').value, fg = $('fg').value, ac = $('ac').value;
+  const bg = $('bg').value, fg = $('fg').value, ac = $('ac').value, title = $('title').value.trim().toUpperCase();
+  const TF = fontOf('ftitle'), XF = fontOf('ftxt'), CF = fontOf('fcred'); FONT = stk(TF);
   ctx.fillStyle = bg; ctx.fillRect(0, 0, f.w, f.h);
-
-  const single = f.spine === 0;
-  const fw = single ? f.w : (f.w - f.spine) / 2;
-  const fx = single ? 0 : fw + f.spine;
-  const title = $('title').value || 'Título do filme';
+  const single = f.spine === 0, fw = single ? f.w : (f.w - f.spine) / 2, fx = single ? 0 : fw + f.spine;
 
   // frente
   if (S.poster) cover(S.poster, fx, 0, fw, f.h);
-  const g = ctx.createLinearGradient(0, f.h * .55, 0, f.h);
-  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.8)');
-  ctx.fillStyle = g; ctx.fillRect(fx, f.h * .55, fw, f.h * .45);
-  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-  const ts = fitText(title.toUpperCase(), fw - 14, f.h * .09, 700);
-  ctx.fillText(title.toUpperCase(), fx + fw / 2, f.h - 10);
-  ctx.fillStyle = ac; ctx.fillRect(fx + fw / 2 - 10, f.h - 8, 20, .8);
-
+  if (title) {
+    const g = ctx.createLinearGradient(0, f.h * .55, 0, f.h);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.8)');
+    ctx.fillStyle = g; ctx.fillRect(fx, f.h * .55, fw, f.h * .45);
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    fitText(title, fw - 14, f.h * .09, TF.w); ctx.fillText(title, fx + fw / 2, f.h - 10);
+  }
   if (single) return;
 
   // lombada
-  ctx.save();
-  ctx.translate(fw + f.spine / 2, f.h / 2); ctx.rotate(Math.PI / 2);
-  ctx.fillStyle = fg; ctx.textBaseline = 'middle';
-  const ss = fitText(title.toUpperCase(), f.h - 40, f.spine * .55, 700);
-  ctx.textAlign = 'center'; ctx.fillText(title.toUpperCase(), 0, 0);
-  ctx.fillStyle = ac; ctx.textAlign = 'left'; ctx.font = `600 ${f.spine * .3}px ${FONT}`;
-  ctx.fillText($('year').value, -(f.h / 2) + 8, 0);
-  ctx.restore();
+  const sp = f.spine, bwid = b => Math.min((sp - 4) * b.size, sp - 1);
+  let y0 = 5, y1 = f.h - 5;
+  for (const b of S.badges.filter(b => b.place === 'top')) { const w = bwid(b); y0 += drawBadge(b, fw + (sp - w) / 2, y0, w) + 3; }
+  for (const b of S.badges.filter(b => b.place === 'base').reverse()) { const w = bwid(b); y1 -= w * b.img.height / b.img.width; drawBadge(b, fw + (sp - w) / 2, y1, w); y1 -= 3; }
+  if (title) {
+    ctx.save(); ctx.translate(fw + sp / 2, (y0 + y1) / 2); ctx.rotate(Math.PI / 2);
+    ctx.fillStyle = fg; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+    fitText(title, Math.max(20, y1 - y0 - 6), sp * .55, TF.w); ctx.fillText(title, 0, 0);
+    ctx.restore();
+  }
 
   // verso
-  const m = 9, bw = fw - m * 2; let y = m + 4;
-  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-  if ($('tag').value) {
-    ctx.fillStyle = ac; ctx.font = `italic 500 ${f.h * .035}px ${FONT}`;
-    for (const l of wrap($('tag').value, bw)) { ctx.fillText(l, m, y); y += f.h * .04; }
+  FONT = stk(XF);
+  const m = 9, bw = fw - m * 2, cx = m + bw / 2, fs = f.h * .024; let y = m + 6;
+  ctx.textBaseline = 'alphabetic';
+  const tag = $('tag').value.trim();
+  if (tag) {
+    ctx.fillStyle = ac; ctx.textAlign = 'center'; ctx.font = `italic 500 ${f.h * .045}px ${FONT}`;
+    for (const l of wrap(tag, bw)) { ctx.fillText(l, cx, y); y += f.h * .05; }
     y += 3;
   }
-  ctx.fillStyle = fg; const fs = f.h * .024; ctx.font = `600 ${fs}px ${FONT}`;
-  for (const l of wrap($('ov').value, bw)) { if (y > f.h * .6) break; ctx.fillText(l, m, y); y += fs * 1.3; }
+  ctx.fillStyle = fg; ctx.textAlign = 'left'; ctx.font = `600 ${fs}px ${FONT}`;
+  for (const l of wrap($('ov').value, bw)) { if (y > f.h * .45) break; ctx.fillText(l, m, y); y += fs * 1.3; }
   y += 4;
-  ctx.fillStyle = ac; ctx.fillRect(m, y, bw, .4); y += 5;
-  ctx.fillStyle = fg; ctx.font = `600 ${fs * .9}px ${FONT}`;
-  const meta = [$('year').value, $('run').value && $('run').value + ' min', $('rate').value].filter(Boolean).join('   |   ');
-  if (meta) { ctx.fillText(meta, m, y); y += fs * 1.4; }
-  if ($('dir').value) for (const l of wrap('Direção: ' + $('dir').value, bw)) { ctx.fillText(l, m, y); y += fs * 1.2; }
-  if ($('cast').value) for (const l of wrap('Elenco: ' + $('cast').value, bw)) { ctx.fillText(l, m, y); y += fs * 1.2; }
-
-  // estúdios
-  let sx = m; const sy = f.h - m - 9;
-  for (const im of S.studios) {
-    const h = 8, w = Math.min(im.width / im.height * h, 28);
-    ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.fillRect(sx - 1.5, sy - 1.5, w + 3, h + 3);
-    ctx.drawImage(im, sx, sy, w, h); sx += w + 6;
+  if (S.shots.length) {
+    const ah = f.h * .33;
+    rectsFor(S.shots.length, $('lay').value, m, y, bw, ah).forEach(([x, yy, w, h], i) => cover(S.shots[i].img, x, yy, w, h));
+    y += ah + 4;
   }
-  // código de barras decorativo
-  let seed = 0; for (const ch of (S.id || title)) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
-  const bx = fw - m - 28, by = f.h - m - 14;
-  ctx.fillStyle = '#fff'; ctx.fillRect(bx - 2, by - 2, 30, 16);
-  ctx.fillStyle = '#000'; let bxx = bx;
-  for (let i = 0; i < 30; i++) { seed = (seed * 1664525 + 1013904223) >>> 0; const bwid = .4 + (seed % 3) * .3; ctx.fillRect(bxx, by, bwid, 12); bxx += bwid + .4 + (seed >> 8) % 2 * .3; if (bxx > bx + 26) break; }
+  const info = [['Vídeo', $('vid').value], ['Áudio', $('aud').value], ['Legendas', $('sub').value], ['Duração', $('run').value && $('run').value + ' min'], ['Extras', $('ext').value], ['Gênero', $('genre').value]].filter(i => i[1]);
+  if (info.length) {
+    const s2 = fs * .9, rows = [info.slice(0, 4), info.slice(4)].filter(r => r.length), bh = rows.length * s2 * 1.7 + 2;
+    ctx.fillStyle = '#fff'; ctx.fillRect(m, y, bw, bh);
+    let ry = y + s2 * 1.5; for (const r of rows) { infoRow(r, cx, ry, s2); ry += s2 * 1.7; }
+    y += bh + 5;
+  }
+  const cr = $('cred').value.trim();
+  if (cr) {
+    const s3 = fs * 1.05;
+    ctx.fillStyle = fg; ctx.textAlign = 'center';
+    ctx.font = `${CF.w} ${s3}px ${stk(CF)}`;
+    for (const l of wrap(cr.toUpperCase(), bw)) { if (y > f.h - m - 16) break; ctx.fillText(l, cx, y); y += s3 * 1.25; }
+  }
+  let bx2 = m;
+  for (const b of S.badges.filter(b => b.place === 'verso')) {
+    const h = 7 * b.size, w = h * b.img.width / b.img.height;
+    drawBadge(b, bx2, f.h - m - h - 1, w); bx2 += w + 4;
+  }
+  let seed = 0; for (const ch of (S.id || title || 'x')) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
+  const bcx = fw - m - 28, bcy = f.h - m - 14;
+  ctx.fillStyle = '#fff'; ctx.fillRect(bcx - 2, bcy - 2, 30, 16);
+  ctx.fillStyle = '#000'; let bxx = bcx;
+  for (let i = 0; i < 30; i++) { seed = (seed * 1664525 + 1013904223) >>> 0; const w = .4 + (seed % 3) * .3; ctx.fillRect(bxx, bcy, w, 12); bxx += w + .4 + (seed >> 8) % 2 * .3; if (bxx > bcx + 26) break; }
 }
 
 // ---------- TMDB ----------
@@ -255,18 +356,26 @@ async function pick(it){
     $('title').value = d.title || d.name || '';
     $('tag').value = d.tagline || '';
     $('ov').value = d.overview || '';
-    $('year').value = (d.release_date || d.first_air_date || '').slice(0, 4);
     $('run').value = d.runtime || (d.episode_run_time && d.episode_run_time[0]) || '';
-    const crew = d.credits ? d.credits.crew : [];
-    $('dir').value = crew.filter(c => c.job === 'Director').map(c => c.name).join(', ') || (d.created_by || []).map(c => c.name).join(', ');
-    $('cast').value = (d.credits ? d.credits.cast : []).slice(0, 6).map(c => c.name).join(', ');
+    $('genre').value = (d.genres || []).map(g => g.name).join(' • ');
+    const crew = d.credits ? d.credits.crew : [], cast = d.credits ? d.credits.cast : [];
+    const by = (...j) => crew.filter(c => j.includes(c.job)).map(c => c.name).slice(0, 3).join(', ');
+    const parts = [['Direção', by('Director') || (d.created_by || []).map(c => c.name).join(', ')], ['Elenco', cast.slice(0, 8).map(c => c.name).join(', ')], ['Escrito por', by('Writer', 'Screenplay', 'Novel')], ['Música de', by('Original Music Composer')], ['Produzido por', by('Producer')], ['Fotografia', by('Director of Photography')], ['Produtora', (d.production_companies || []).map(c => c.name).slice(0, 3).join(', ')]];
+    $('cred').value = parts.filter(p => p[1]).map(p => p[0] + ': ' + p[1]).join('  ·  ');
+
     const posters = (d.images.posters || []).slice(0, 14).map(p => p.file_path);
     if (d.poster_path && !posters.includes(d.poster_path)) posters.unshift(d.poster_path);
     showPosters(posters);
     if (posters[0]) usePoster(posters[0]);
-    S.studios = [];
-    const logos = (d.production_companies || []).filter(c => c.logo_path).slice(0, 3);
-    for (const c of logos) { try { S.studios.push(await loadImg(IMG + 'w300' + c.logo_path)); } catch (e) {} }
+
+    S.shots = []; S.backs = (d.images.backdrops || []).slice(0, 16).map(b => b.file_path);
+    showBacks(); renderShots();
+    for (const p of S.backs.slice(0, 4)) await toggleBack(p);
+
+    S.badges = S.badges.filter(b => !b.tmdb);
+    S.opts = [...(d.production_companies || []).filter(c => c.logo_path).map(c => c.logo_path), ...(d.images.logos || []).slice(0, 6).map(l => l.file_path)];
+    showOpts(); renderBadges();
+    if (S.opts[0]) await addBadge(IMG + 'w300' + S.opts[0], 'top', true);
     st(''); draw();
   } catch (e) { st('Não foi possível carregar este título.'); }
 }
@@ -285,6 +394,71 @@ async function usePoster(p){
   try { S.poster = await loadImg(IMG + 'w780' + p); draw(); } catch (e) { st('Não foi possível carregar este pôster.'); }
 }
 
+function showBacks(){
+  const box = $('backs'); box.replaceChildren();
+  for (const p of S.backs) {
+    const im = document.createElement('img'); im.src = IMG + 'w300' + p; im.alt = 'Cena do filme'; im.loading = 'lazy'; im.dataset.key = p;
+    im.onclick = () => toggleBack(p);
+    box.appendChild(im);
+  }
+  markBacks();
+}
+function markBacks(){ document.querySelectorAll('#backs img').forEach(im => im.classList.toggle('on', S.shots.some(s => s.key === im.dataset.key))); }
+
+async function toggleBack(p){
+  const i = S.shots.findIndex(s => s.key === p);
+  if (i >= 0) S.shots.splice(i, 1);
+  else {
+    if (S.shots.length >= 5) return st('Máximo de 5 imagens. Clique em uma selecionada para remover.');
+    try { S.shots.push({ key: p, img: await loadImg(IMG + 'w1280' + p) }); } catch (e) { return st('Não foi possível carregar a imagem.'); }
+  }
+  markBacks(); renderShots(); draw();
+}
+
+function renderShots(){
+  const box = $('shotList'); box.replaceChildren();
+  S.shots.forEach((sh, i) => {
+    const d = document.createElement('div'); d.className = 'item';
+    const im = document.createElement('img'); im.src = sh.img.src; im.alt = '';
+    const n = document.createElement('strong'); n.textContent = i + 1;
+    const mk = (t, fn) => { const b = document.createElement('button'); b.className = 'alt'; b.textContent = t; b.onclick = fn; return b; };
+    const mv = k => () => { const j = i + k; if (j < 0 || j >= S.shots.length) return; [S.shots[i], S.shots[j]] = [S.shots[j], S.shots[i]]; renderShots(); draw(); };
+    d.append(n, im, mk('◀', mv(-1)), mk('▶', mv(1)), mk('✕', () => { S.shots.splice(i, 1); markBacks(); renderShots(); draw(); }));
+    box.appendChild(d);
+  });
+}
+
+function showOpts(){
+  const box = $('embOpts'); box.replaceChildren();
+  for (const p of S.opts) {
+    const im = document.createElement('img'); im.src = IMG + 'w185' + p; im.alt = 'Logo'; im.className = 'ck'; im.loading = 'lazy';
+    im.onclick = () => addBadge(IMG + 'w300' + p, 'verso', true);
+    box.appendChild(im);
+  }
+}
+
+async function addBadge(src, place, tmdbSrc){
+  try { S.badges.push({ img: await loadImg(src), place, size: 1, plate: false, tmdb: !!tmdbSrc }); renderBadges(); draw(); }
+  catch (e) { st('Não foi possível carregar o emblema.'); }
+}
+
+function renderBadges(){
+  const box = $('badgeList'); box.replaceChildren();
+  S.badges.forEach((b, i) => {
+    const d = document.createElement('div'); d.className = 'item';
+    const im = document.createElement('img'); im.src = b.img.src; im.alt = ''; im.className = 'ck';
+    const sel = document.createElement('select');
+    [['top', 'Lombada (topo)'], ['base', 'Lombada (base)'], ['verso', 'Verso (rodapé)']].forEach(([v, t]) => { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o); });
+    sel.value = b.place; sel.onchange = () => { b.place = sel.value; draw(); };
+    const rg = document.createElement('input'); rg.type = 'range'; rg.min = .4; rg.max = 1.6; rg.step = .1; rg.value = b.size; rg.setAttribute('aria-label', 'Tamanho');
+    rg.oninput = () => { b.size = +rg.value; requestAnimationFrame(draw); };
+    const lb = document.createElement('label'), ck = document.createElement('input'); ck.type = 'checkbox'; ck.checked = b.plate;
+    ck.onchange = () => { b.plate = ck.checked; draw(); }; lb.append(ck, 'Fundo claro');
+    const rm = document.createElement('button'); rm.className = 'alt'; rm.textContent = '✕'; rm.onclick = () => { S.badges.splice(i, 1); renderBadges(); draw(); };
+    d.append(im, sel, rg, lb, rm); box.appendChild(d);
+  });
+}
+
 // ---------- eventos ----------
 $('go').onclick = search;
 $('q').addEventListener('keydown', e => { if (e.key === 'Enter') search(); });
@@ -299,6 +473,23 @@ $('exp').onclick = () => cv.toBlob(b => {
   a.download = `${($('title').value || 'capa').replace(/[^\w-]+/g, '-')}-${$('fmt').value}.png`; a.click();
 }, 'image/png');
 
+for (const id of ['ftitle', 'ftxt', 'fcred']) {
+  const sel = $(id); let og = null, last = '';
+  for (const e of FL) {
+    if (e.g !== last) { og = document.createElement('optgroup'); og.label = e.g; sel.appendChild(og); last = e.g; }
+    const o = document.createElement('option'); o.value = o.textContent = e.n; og.appendChild(o);
+  }
+  sel.value = 'Barlow Condensed';
+  sel.addEventListener('change', ensureFonts);
+}
+const files = (input, fn) => input.onchange = async e => { for (const f of e.target.files) { const u = URL.createObjectURL(f); try { await fn(await loadImg(u)); } catch (x) {} } e.target.value = ''; };
+files($('shotup'), im => { if (S.shots.length < 5) { S.shots.push({ key: 'up' + Date.now() + S.shots.length, img: im }); renderShots(); draw(); } else st('Máximo de 5 imagens.'); });
+files($('badgeup'), im => { S.badges.push({ img: im, place: 'verso', size: 1, plate: false, tmdb: false }); renderBadges(); draw(); });
+$('fontup').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try { const ff = new FontFace('CredFont', await f.arrayBuffer()); await ff.load(); document.fonts.add(ff); S.credFont = true; if (!$('fcred').querySelector('[value=__up]')) { const o = document.createElement('option'); o.value = '__up'; o.textContent = 'Fonte enviada por você'; $('fcred').appendChild(o); } $('fcred').value = '__up'; draw(); st('Fonte carregada.'); }
+  catch (x) { st('Arquivo de fonte inválido.'); }
+};
 draw();
 Promise.all([document.fonts.load(`700 20px "Barlow Condensed"`), document.fonts.load(`600 20px "Barlow Condensed"`), document.fonts.load(`italic 500 20px "Barlow Condensed"`)]).then(draw).catch(() => {});
 </script>
