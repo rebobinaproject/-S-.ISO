@@ -797,6 +797,10 @@ function exportarProjeto() {
     // Limpa a memória
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  <input type="file" id="input-importar" accept=".json" style="display:none" onchange="importarProjeto(event)">
+<button onclick="document.getElementById('input-importar').click()">Carregar Projeto</button>
+<button onclick="exportarProjeto()">Salvar/Enviar Projeto</button>
+
 }
 
 // 2. FUNÇÃO PARA IMPORTAR O PROJETO (.json)
