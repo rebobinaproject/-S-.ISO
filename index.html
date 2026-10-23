@@ -774,5 +774,116 @@ $('fontup').onchange = async e => {
 draw();
 Promise.all([document.fonts.load(`700 20px "Barlow Condensed"`), document.fonts.load(`600 20px "Barlow Condensed"`), document.fonts.load(`italic 500 20px "Barlow Condensed"`)]).then(draw).catch(() => {});
 </script>
+// 1. FUNÇÃO PARA EXPORTAR O PROJETO (Botão "Salvar Projeto")
+function exportarProjeto() {
+    // Certifique-se de consolidar os dados atuais antes de exportar
+    const dadosDoProjeto = {
+        identificador: "GERADOR_DE_CAPAS_PRO",
+        formatoAtual: formatoAtual, // ex: 'dvd', 'bluray'
+        // Salva o estado de todas as mídias para a pessoa não perder nada
+        estados: estadosPorFormato 
+    };
+
+    const jsonString = JSON.stringify(dadosDoProjeto, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `projeto_capa_${formatoAtual}_${Date.now()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    
+    // Limpa a memória
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+// 2. FUNÇÃO PARA IMPORTAR O PROJETO (.json)
+function importarProjeto(evento) {
+    const arquivo = evento.target.files[0];
+    if (!arquivo) return;
+
+    const leitor = new FileReader();
+    leitor.onload = function(e) {
+        try {
+            const projeto = JSON.parse(e.target.result);
+            
+            if (projeto.identificador !== "GERADOR_DE_CAPAS_PRO") {
+                alert("Arquivo inválido ou não suportado!");
+                return;
+            }
+
+            // Restaura os dados no sistema
+            estadosPorFormato = projeto.estados;
+            formatoAtual = projeto.formatoAtual;
+            
+            // Atualiza o select do HTML para o formato correto
+            const selectFormato = document.getElementById('formato');
+            if (selectFormato) selectFormato.value = formatoAtual;
+
+            // Recarrega o canvas com os novos dados
+            recalcularDimensoesEAtualizar(); 
+            alert("Projeto carregado com sucesso!");
+        } catch (erro) {
+            alert("Erro ao ler o arquivo JSON. Certifique-se de que ele não foi corrompido.");
+        }
+    };
+    leitor.readAsText(arquivo);
+}
+document.addEventListener('keydown', function(e) {
+    // Se o usuário estiver digitando em uma caixa de texto real (input/textarea), não ativa os atalhos
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    // 1. APAGAR ELEMENTO (Tecla Delete)
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (elementoSelecionado) {
+            salvarEstadoParaHistorico(); // Garante que dá para dar Ctrl+Z depois
+            
+            // Filtra a lista do formato atual removendo o selecionado
+            estadosPorFormato[formatoAtual].elementos = estadosPorFormato[formatoAtual].elementos.filter(
+                el => el !== elementoSelecionado
+            );
+            
+            elementoSelecionado = null; // Remove a seleção
+            desenharTudoNoCanvas(); // Força o redesenho da tela
+        }
+    }
+
+    // 2. DESFAZER (Ctrl + Z)
+    if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        desfazerUltimaAcao();
+    }
+});
+
+// 3. DUPLICAR ELEMENTO (Botão +)
+function duplicarElementoSelecionado() {
+    if (!elementoSelecionado) {
+        alert("Selecione um texto ou imagem primeiro para duplicar!");
+        return;
+    }
+
+    salvarEstadoParaHistorico();
+
+    // Faz uma cópia profunda (clone) do objeto selecionado
+    const clone = JSON.parse(JSON.stringify(elementoSelecionado));
+    
+    // Desloca um pouco o clone para o usuário ver que duplicou e não ficou exatamente em cima
+    clone.x += 20;
+    clone.y += 20;
+    
+    // Se for um texto editável, pode adicionar um identificador ou manter igual
+    if (clone.id) clone.id = clone.id + '_copia';
+
+    // Adiciona o clone na lista do formato atual
+    estadosPorFormato[formatoAtual].elementos.push(clone);
+    
+    // Altera a seleção automática para o novo clone
+    elementoSelecionado = clone;
+    
+    desenharTudoNoCanvas();
+}
+
 </body>
 </html>
